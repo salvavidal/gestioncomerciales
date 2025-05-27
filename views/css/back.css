@@ -1,0 +1,57 @@
+/* Estilos para el módulo Gestión Comerciales */
+
+/* Mejoras para los botones de filtrado */
+#gestioncomerciales .btn-group {
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+#gestioncomerciales .btn-group .btn {
+    font-size: 13px;
+    font-weight: 500;
+    padding: 8px 16px;
+    transition: all 0.2s ease;
+    border: 1px solid #ddd;
+}
+
+#gestioncomerciales .btn-group .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+#gestioncomerciales .btn-group .btn.btn-primary {
+    background-color: #337ab7;
+    border-color: #2e6da4;
+    color: white;
+}
+
+#gestioncomerciales .btn-group .btn.btn-default {
+    background-color: #f8f9fa;
+    border-color: #ddd;
+    color: #333;
+}
+
+#gestioncomerciales .btn-group .btn i {
+    margin-right: 6px;
+}
+
+/* Espaciado mejorado */
+#gestioncomerciales .panel-body .row {
+    margin-bottom: 15px;
+}
+
+/* Título del panel */
+#gestioncomerciales .panel-heading i.icon-user {
+    margin-right: 8px;
+    color: #337ab7;
+}
+
+/* Mejorar la tabla */
+#gestioncomerciales table.table th {
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-weight: 600;
+}
+
+#gestioncomerciales table.table tbody tr:hover {
+    background-color: #f8f9fa;
+}

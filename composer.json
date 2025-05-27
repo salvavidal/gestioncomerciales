@@ -1,0 +1,8 @@
+{
+    "name": "mi-modulo/gestioncomerciales",
+    "autoload": {
+        "psr-4": {
+            "Gestioncomerciales\\": "src/"
+        }
+    }
+}

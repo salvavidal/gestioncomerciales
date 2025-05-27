@@ -1,0 +1,8 @@
+services:
+    gestioncomerciales.event_subscriber.customer_list_restriction:
+        class: 'Gestioncomerciales\EventListener\CustomerListRestrictionListener'
+        arguments:
+            - '@doctrine.dbal.default_connection'
+            - '@prestashop.adapter.legacy.context'
+        tags:
+            - { name: 'kernel.event_listener', event: 'actionCustomerGridQueryBuilderModifier', method: 'onCustomerGridQueryBuilderModifier' }
