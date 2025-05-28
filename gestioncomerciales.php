@@ -79,76 +79,56 @@ class Gestioncomerciales extends Module
 
     public function hookDisplayAdminCustomers($params)
     {
-        // Mostrar el botón en el listado de clientes
-        if (Tools::getValue('controller') == 'AdminCustomers' && !Tools::getValue('id_customer')) {
-            $id_customer = (int)Tools::getValue('id_customer');
-            $token = Tools::getAdminTokenLite('AdminCustomers');
-            $loginUrl = $this->context->link->getAdminLink('AdminCustomers') . '&id_customer=' . $id_customer . '&action=loginAsCustomer&token=' . $token;
-            
-            return '<a href="'.$loginUrl.'" class="btn btn-default" title="'.$this->l('Login como Cliente').'">
-                <i class="icon-user"></i> '.$this->l('Login como Cliente').'
-            </a>';
+        // Añadir botón en el listado de clientes
+        $id_customer = (int)Tools::getValue('id_customer');
+        if (!$id_customer) {
+            return '';
         }
-        return '';
-    }
 
-    public function hookDisplayAdminCustomersForm($params)
-    {
-        // Mostrar el botón en el detalle del cliente
-        if (Tools::getValue('controller') == 'AdminCustomers' && Tools::getValue('id_customer')) {
-            $id_customer = (int)Tools::getValue('id_customer');
-            $token = Tools::getAdminTokenLite('AdminCustomers');
-            $loginUrl = $this->context->link->getAdminLink('AdminCustomers') . '&id_customer=' . $id_customer . '&action=loginAsCustomer&token=' . $token;
-            
-            return '<div class="panel">
-                <div class="panel-heading">
-                    <i class="icon-user"></i> '.$this->l('Acciones adicionales').'
-                </div>
-                <div class="form-wrapper">
-                    <div class="form-group">
-                        <a href="'.$loginUrl.'" class="btn btn-primary">
-                            <i class="icon-user"></i> '.$this->l('Login como Cliente').'
-                        </a>
-                    </div>
-                </div>
-            </div>';
-        }
-        return '';
+        $token = Tools::getAdminTokenLite('AdminCustomers');
+        $loginUrl = $this->context->link->getAdminLink('AdminCustomers', true, [], [
+            'action' => 'loginAsCustomer',
+            'id_customer' => $id_customer,
+            'token' => $token
+        ]);
+
+        return '<div class="btn-group">
+            <a href="'.$loginUrl.'" class="btn btn-default" target="_blank">
+                <i class="icon-user"></i> '.$this->l('Login como Cliente').'
+            </a>
+        </div>';
     }
 
     public function hookActionCustomerGridDefinitionModifier($params)
     {
         /** @var \PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition */
         $definition = $params['definition'];
-        
+
         // Crear una nueva colección de acciones
+        $actionsColumn = $definition->getColumns()->get('actions');
+        $actions = $actionsColumn->getOptions()['actions'];
+
+        // Crear la acción de login
         $loginAction = new LinkRowAction('login_as_customer');
         $loginAction->setName($this->l('Login como Cliente'))
             ->setIcon('account_circle')
             ->setOptions([
-                'route' => 'admin_customers_view',
-                'route_param_name' => 'customerId',
+                'route' => 'admin_customers_index',
+                'route_param_name' => 'id_customer',
                 'route_param_field' => 'id_customer',
                 'extra_route_params' => [
                     'action' => 'loginAsCustomer'
                 ],
-                'target' => '_blank',
-                'use_inline_display' => true,
+                'target' => '_blank'
             ]);
 
-        // Crear una nueva colección de acciones y añadir nuestra acción
-        $actionsCollection = new RowActionCollection();
-        $actionsCollection->add($loginAction);
+        // Añadir la acción a la colección existente
+        $actions[] = $loginAction;
 
-        // Añadir la columna de acciones con nuestra colección
-        $definition->getColumns()
-            ->addAfter('optin', 
-                (new ActionColumn('login_as_customer'))
-                    ->setName($this->l('Login como Cliente'))
-                    ->setOptions([
-                        'actions' => $actionsCollection
-                    ])
-            );
+        // Actualizar las acciones en la columna
+        $actionsColumn->setOptions([
+            'actions' => $actions
+        ]);
     }
 
     public function getContent()

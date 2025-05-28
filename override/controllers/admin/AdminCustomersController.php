@@ -7,6 +7,7 @@ class AdminCustomersController extends AdminCustomersControllerCore
         parent::__construct();
         $this->bootstrap = true;
         
+        // Añadir la acción loginAsCustomer
         if (!in_array('loginAsCustomer', $this->actions)) {
             $this->actions[] = 'loginAsCustomer';
         }
