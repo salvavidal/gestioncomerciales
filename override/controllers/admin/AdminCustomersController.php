@@ -28,6 +28,23 @@ class AdminCustomersController extends AdminCustomersControllerCore
         parent::getList($id_lang, $order_by, $order_way, $start, $limit, $id_lang_shop);
     }
 
+    public function renderView()
+    {
+        $tpl = parent::renderView();
+        
+        // Añadir botón de login como cliente
+        if (Tools::getValue('id_customer')) {
+            $this->toolbar_btn['login_as_customer'] = [
+                'href' => self::$currentIndex . '&action=loginAsCustomer&id_customer=' . (int)Tools::getValue('id_customer') . '&token=' . $this->token,
+                'desc' => $this->l('Login como Cliente'),
+                'icon' => 'process-icon-preview',
+                'class' => 'btn-info'
+            ];
+        }
+        
+        return $tpl;
+    }
+
     public function initPageHeaderToolbar()
     {
         parent::initPageHeaderToolbar();
