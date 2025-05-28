@@ -126,10 +126,14 @@ class Gestioncomerciales extends Module
         $loginAction->setName($this->l('Login como Cliente'))
             ->setIcon('account_circle')
             ->setOptions([
-                'route' => 'admin_customers_login_as_customer',
+                'route' => 'admin_customers_view',
                 'route_param_name' => 'customerId',
                 'route_param_field' => 'id_customer',
+                'extra_route_params' => [
+                    'action' => 'loginAsCustomer'
+                ],
                 'target' => '_blank',
+                'use_inline_display' => true,
             ]);
 
         // Crear una nueva colección de acciones y añadir nuestra acción
