@@ -100,9 +100,6 @@ class Gestioncomerciales extends Module
         /** @var \PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition */
         $definition = $params['definition'];
 
-        // Obtener el token para AdminCustomers
-        $token = Tools::getAdminTokenLite('AdminCustomers');
-
         $definition->getColumns()->addAfter(
             'optin',
             (new ActionColumn('actions'))
@@ -116,7 +113,7 @@ class Gestioncomerciales extends Module
                                 ->setOptions([
                                     'route' => 'admin_customers_view',
                                     'route_param_name' => 'customerId',
-                                    'route_param_field' => 'id_customer',
+                                    'route_param_field' => 'id_customer'
                                 ])
                         )
                         ->add(
@@ -127,8 +124,9 @@ class Gestioncomerciales extends Module
                                     'route' => 'admin_customers_view',
                                     'route_param_name' => 'customerId',
                                     'route_param_field' => 'id_customer',
-                                    'clickable_row' => true,
-                                    'use_inline_display' => true,
+                                    'extra_route_params' => [
+                                        'action' => 'loginAsCustomer'
+                                    ]
                                 ])
                         )
                 ])
