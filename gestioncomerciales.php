@@ -100,6 +100,9 @@ class Gestioncomerciales extends Module
         /** @var \PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition */
         $definition = $params['definition'];
 
+        // Obtener el token para AdminCustomers
+        $token = Tools::getAdminTokenLite('AdminCustomers');
+
         $definition->getColumns()->addAfter(
             'optin',
             (new ActionColumn('actions'))
@@ -107,18 +110,25 @@ class Gestioncomerciales extends Module
                 ->setOptions([
                     'actions' => (new RowActionCollection())
                         ->add(
+                            (new LinkRowAction('view'))
+                                ->setIcon('remove_red_eye')
+                                ->setName($this->l('Ver'))
+                                ->setOptions([
+                                    'route' => 'admin_customers_view',
+                                    'route_param_name' => 'customerId',
+                                    'route_param_field' => 'id_customer',
+                                ])
+                        )
+                        ->add(
                             (new LinkRowAction('login_as_customer'))
                                 ->setIcon('account_circle')
                                 ->setName($this->l('Login como Cliente'))
                                 ->setOptions([
-                                    'route' => 'admin_customers_index',
-                                    'route_param_name' => 'id_customer',
+                                    'route' => 'admin_customers_view',
+                                    'route_param_name' => 'customerId',
                                     'route_param_field' => 'id_customer',
-                                    'clickable_row' => false,
+                                    'clickable_row' => true,
                                     'use_inline_display' => true,
-                                    'extra_route_params' => [
-                                        'action' => 'loginAsCustomer'
-                                    ]
                                 ])
                         )
                 ])
