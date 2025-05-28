@@ -103,39 +103,28 @@ class Gestioncomerciales extends Module
         /** @var \PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition */
         $definition = $params['definition'];
 
-        // Crear una nueva colección de acciones
-        $rowActionCollection = new RowActionCollection();
-
-        // Crear la acción de login
-        $loginAction = new LinkRowAction('login_as_customer');
-        $loginAction->setName($this->l('Login como Cliente'))
-            ->setIcon('account_circle')
-            ->setOptions([
-                'route' => 'admin_customers_index',
-                'route_param_name' => 'id_customer',
-                'route_param_field' => 'id_customer',
-                'extra_route_params' => [
-                    'action' => 'loginAsCustomer'
-                ],
-                'target' => '_blank'
-            ]);
-
-        // Añadir la acción a la colección
-        $rowActionCollection->add($loginAction);
-
-        // Obtener las acciones existentes
-        $actionsColumn = $definition->getColumns()->get('actions');
-        $existingActions = $actionsColumn->getOptions()['actions'];
-
-        // Añadir las acciones existentes a la colección
-        foreach ($existingActions as $action) {
-            $rowActionCollection->add($action);
-        }
-
-        // Actualizar las acciones en la columna
-        $actionsColumn->setOptions([
-            'actions' => $rowActionCollection
-        ]);
+        $definition->getColumns()->addAfter(
+            'optin',
+            (new ActionColumn('login_as_customer'))
+                ->setName($this->l('Login como Cliente'))
+                ->setOptions([
+                    'actions' => (new RowActionCollection())
+                        ->add(
+                            (new LinkRowAction('login_as_customer'))
+                                ->setIcon('account_circle')
+                                ->setName($this->l('Login como Cliente'))
+                                ->setOptions([
+                                    'route' => 'admin_customers_index',
+                                    'route_param_name' => 'id_customer',
+                                    'route_param_field' => 'id_customer',
+                                    'extra_route_params' => [
+                                        'action' => 'loginAsCustomer'
+                                    ],
+                                    'target' => '_blank'
+                                ])
+                        )
+                ])
+        );
     }
 
     public function getContent()
