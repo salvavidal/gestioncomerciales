@@ -124,9 +124,7 @@ class Gestioncomerciales extends Module
                                     'route' => 'admin_customers_view',
                                     'route_param_name' => 'customerId',
                                     'route_param_field' => 'id_customer',
-                                    'extra_route_params' => [
-                                        'action' => 'loginAsCustomer'
-                                    ]
+                                    'route_fragment' => 'login_as_customer'
                                 ])
                         )
                 ])
