@@ -1,0 +1,9 @@
+admin_customers_login_as_customer:
+  path: /sell/customers/{customerId}/login-as
+  methods: [GET, POST]
+  defaults:
+    _controller: 'PrestaShopBundle\Controller\Admin\Sell\Customer\CustomerController::loginAsCustomerAction'
+    _legacy_controller: 'AdminCustomers'
+    _legacy_link: 'AdminCustomers:loginAsCustomer'
+  requirements:
+    customerId: \d+
