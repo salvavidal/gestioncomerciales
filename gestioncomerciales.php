@@ -32,7 +32,6 @@ class Gestioncomerciales extends Module
         if (!parent::install() || 
             !$this->registerHook('displayBackOfficeHeader') ||
             !$this->registerHook('displayAdminCustomers') ||
-            !$this->registerHook('displayAdminCustomersForm') ||
             !$this->registerHook('actionCustomerGridDefinitionModifier')) {
             return false;
         }
@@ -105,8 +104,7 @@ class Gestioncomerciales extends Module
         $definition = $params['definition'];
 
         // Crear una nueva colección de acciones
-        $actionsColumn = $definition->getColumns()->get('actions');
-        $actions = $actionsColumn->getOptions()['actions'];
+        $rowActionCollection = new RowActionCollection();
 
         // Crear la acción de login
         $loginAction = new LinkRowAction('login_as_customer');
@@ -122,12 +120,21 @@ class Gestioncomerciales extends Module
                 'target' => '_blank'
             ]);
 
-        // Añadir la acción a la colección existente
-        $actions[] = $loginAction;
+        // Añadir la acción a la colección
+        $rowActionCollection->add($loginAction);
+
+        // Obtener las acciones existentes
+        $actionsColumn = $definition->getColumns()->get('actions');
+        $existingActions = $actionsColumn->getOptions()['actions'];
+
+        // Añadir las acciones existentes a la colección
+        foreach ($existingActions as $action) {
+            $rowActionCollection->add($action);
+        }
 
         // Actualizar las acciones en la columna
         $actionsColumn->setOptions([
-            'actions' => $actions
+            'actions' => $rowActionCollection
         ]);
     }
 
