@@ -71,7 +71,8 @@ class Gestioncomerciales extends Module
                $this->registerHook('header') &&
                $this->registerHook('backOfficeHeader') &&
                $this->registerHook('displayAdminCustomers') &&
-               $this->registerHook('actionCustomerGridDefinitionModifier');
+               $this->registerHook('actionCustomerGridDefinitionModifier') &&
+               $this->installOverrides();
     }
 
     public function uninstall()
@@ -85,7 +86,7 @@ class Gestioncomerciales extends Module
             $tab->delete();
         }
         
-        return parent::uninstall();
+        return parent::uninstall() && $this->uninstallOverrides();
     }
 	
     public function hookBackOfficeHeader()
@@ -165,21 +166,20 @@ class Gestioncomerciales extends Module
             $this->processAssignClients();
         }
 
-        // Obtener datos de comerciales (solo comerciales por defecto) y clientes
-        $commercials = $this->getAllCommercials(true); // true = solo comerciales para el listado
-        $allEmployees = $this->getAllCommercials(false); // false = todos los empleados para el desplegable
+        // Obtener datos de comerciales y clientes
+        $commercials = $this->getAllCommercials(true);
+        $allEmployees = $this->getAllCommercials(false);
         $clients = $this->getAllClients();
 
         // Asignar variables para la plantilla
         $this->context->smarty->assign([
             'commercials' => $commercials,
-            'allEmployees' => $allEmployees, // Todos los empleados para el desplegable
+            'allEmployees' => $allEmployees,
             'module_dir' => $this->_path,
             'currentIndex' => AdminController::$currentIndex . '&configure=' . $this->name,
             'token' => $token,
         ]);
 
-        // Renderizar el listado de comerciales y el formulario unificado de asignación
         $output = $this->renderList();
         $output .= '<div class="panel">
             <div class="panel-heading">
@@ -245,7 +245,6 @@ class Gestioncomerciales extends Module
 
     private function renderList()
     {
-        // Cargar solo comerciales por defecto (no todos los empleados)
         $commercials = $this->getAllCommercials(true);
 
         $fields_list = [
@@ -305,92 +304,6 @@ class Gestioncomerciales extends Module
         </div>';
 
         return $list;
-    }
-
-    private function renderAssignForm($commercials, $clients)
-    {
-        // Preparar opciones de comerciales para el select
-        $commercial_options = [];
-        foreach ($commercials as $commercial) {
-            $commercial_options[] = [
-                'id_option' => $commercial['id'],
-                'name' => $commercial['firstname'] . ' ' . $commercial['lastname']
-            ];
-        }
-
-        // Configurar los campos del formulario
-        $fields_form = [
-            'form' => [
-                'legend' => [
-                    'title' => $this->l('Asignar Clientes a Comercial'),
-                    'icon' => 'icon-user'
-                ],
-                'input' => [
-                    [
-                        'type' => 'select',
-                        'label' => $this->l('Selecciona Comercial'),
-                        'name' => 'id_comercial',
-                        'required' => true,
-                        'options' => [
-                            'query' => $commercial_options,
-                            'id' => 'id_option',
-                            'name' => 'name'
-                        ]
-                    ]
-                ],
-                'submit' => [
-                    'title' => $this->l('Asignar Clientes'),
-                    'class' => 'btn btn-default pull-right'
-                ]
-            ]
-        ];
-
-        $helper = new HelperForm();
-        $helper->module = $this;
-        $helper->name_controller = $this->name;
-        $helper->identifier = $this->identifier;
-        $helper->token = Tools::getAdminTokenLite('AdminModules');
-        $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
-        $helper->title = $this->displayName;
-        $helper->submit_action = 'submitAssignClients';
-
-        // Valores predeterminados
-        $helper->fields_value = [
-            'id_comercial' => '',
-        ];
-
-        // Generar el formulario y añadir la tabla de clientes
-        $output = $helper->generateForm([$fields_form]);
-        
-        // Añadir la tabla de clientes con checkboxes
-        $output .= '<div class="panel">
-            <div class="panel-heading">' . $this->l('Seleccionar Clientes') . '</div>
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th><input type="checkbox" id="checkAll" /></th>
-                            <th>' . $this->l('ID') . '</th>
-                            <th>' . $this->l('Nombre') . '</th>
-                            <th>' . $this->l('Apellido') . '</th>
-                            <th>' . $this->l('Email') . '</th>
-                        </tr>
-                    </thead>
-                    <tbody>';
-
-        foreach ($clients as $client) {
-            $output .= '<tr>
-                <td><input type="checkbox" name="id_clients[]" value="' . $client['id_customer'] . '" /></td>
-                <td>' . $client['id_customer'] . '</td>
-                <td>' . $client['firstname'] . '</td>
-                <td>' . $client['lastname'] . '</td>
-                <td>' . $client['email'] . '</td>
-            </tr>';
-        }
-
-        $output .= '</tbody></table></div></div>';
-
-        return $output;
     }
 
     private function renderClientCommercialList()
@@ -474,7 +387,6 @@ class Gestioncomerciales extends Module
             FROM ' . _DB_PREFIX_ . 'employee e
             LEFT JOIN ' . _DB_PREFIX_ . 'profile_lang pl ON e.id_profile = pl.id_profile AND pl.id_lang = ' . $id_lang;
         
-        // Filtrar solo comerciales si se especifica
         if ($onlyCommercials) {
             $sql .= ' WHERE LOWER(pl.name) LIKE "%comercial%" OR LOWER(pl.name) LIKE "%sales%" OR LOWER(pl.name) LIKE "%ventas%"';
         }
@@ -494,30 +406,6 @@ class Gestioncomerciales extends Module
     {
         $sql = 'SELECT * FROM `' . _DB_PREFIX_ . 'comerciales` WHERE `id` = ' . (int)$id_commercial;
         return Db::getInstance()->getRow($sql);
-    }
-
-    private function processAddOrEditCommercial()
-    {
-        $id_commercial = (int)Tools::getValue('id');
-        $data = [
-            'nombre_apellidos' => pSQL(Tools::getValue('nombre_apellidos')),
-            'telefono' => pSQL(Tools::getValue('telefono')),
-            'correo' => pSQL(Tools::getValue('correo')),
-            'observaciones' => pSQL(Tools::getValue('observaciones'))
-        ];
-
-        if ($id_commercial) {
-            Db::getInstance()->update('comerciales', $data, 'id = ' . $id_commercial);
-        } else {
-            Db::getInstance()->insert('comerciales', $data);
-        }
-
-        Tools::redirectAdmin(AdminController::$currentIndex . '&configure=' . $this->name . '&token=' . Tools::getAdminTokenLite('AdminModules'));
-    }
-
-    private function processDeleteCommercial($id_commercial)
-    {
-        Db::getInstance()->delete('comerciales', 'id = ' . (int)$id_commercial);
     }
 
     private function getClientCommercialList()

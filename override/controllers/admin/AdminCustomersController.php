@@ -8,7 +8,7 @@ class AdminCustomersController extends AdminCustomersControllerCore
         $this->bootstrap = true;
         
         // Registrar la acción loginAsCustomer
-        $this->actions = array_merge($this->actions, ['loginAsCustomer']);
+        $this->actions[] = 'loginAsCustomer';
     }
 
     public function getList($id_lang, $order_by = null, $order_way = null, $start = 0, $limit = null, $id_lang_shop = false)
@@ -33,18 +33,14 @@ class AdminCustomersController extends AdminCustomersControllerCore
 
     public function loginAsCustomer()
     {
-        if (!Module::isEnabled('gestioncomerciales')) {
-            return Tools::redirectAdmin($this->context->link->getAdminLink('AdminCustomers'));
-        }
-
         $id_customer = (int)Tools::getValue('id_customer');
         if (!$id_customer) {
-            return Tools::redirectAdmin($this->context->link->getAdminLink('AdminCustomers'));
+            Tools::redirectAdmin($this->context->link->getAdminLink('AdminCustomers'));
         }
 
         $customer = new Customer($id_customer);
         if (!Validate::isLoadedObject($customer)) {
-            return Tools::redirectAdmin($this->context->link->getAdminLink('AdminCustomers'));
+            Tools::redirectAdmin($this->context->link->getAdminLink('AdminCustomers'));
         }
 
         // Guardar el ID del empleado actual
