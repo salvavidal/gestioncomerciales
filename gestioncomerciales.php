@@ -5,6 +5,7 @@ if (!defined('_PS_VERSION_')) {
 
 use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\ActionColumn;
 use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\LinkRowAction;
+use PrestaShop\PrestaShop\Core\Grid\Action\Row\RowActionCollection;
 
 class Gestioncomerciales extends Module
 {
@@ -117,26 +118,31 @@ class Gestioncomerciales extends Module
 
     public function hookActionCustomerGridDefinitionModifier($params)
     {
+        /** @var \PrestaShop\PrestaShop\Core\Grid\Definition\GridDefinition */
         $definition = $params['definition'];
         
-        $definition
-            ->getColumns()
-            ->addAfter(
-                'optin',
+        // Crear una nueva colección de acciones
+        $loginAction = new LinkRowAction('login_as_customer');
+        $loginAction->setName($this->l('Login como Cliente'))
+            ->setIcon('account_circle')
+            ->setOptions([
+                'route' => 'admin_customers_login_as_customer',
+                'route_param_name' => 'customerId',
+                'route_param_field' => 'id_customer',
+                'target' => '_blank',
+            ]);
+
+        // Crear una nueva colección de acciones y añadir nuestra acción
+        $actionsCollection = new RowActionCollection();
+        $actionsCollection->add($loginAction);
+
+        // Añadir la columna de acciones con nuestra colección
+        $definition->getColumns()
+            ->addAfter('optin', 
                 (new ActionColumn('login_as_customer'))
                     ->setName($this->l('Login como Cliente'))
                     ->setOptions([
-                        'actions' => [
-                            (new LinkRowAction('login_as_customer'))
-                                ->setIcon('account_circle')
-                                ->setOptions([
-                                    'route' => 'admin_customers_login_as_customer',
-                                    'route_param_name' => 'customerId',
-                                    'route_param_field' => 'id_customer',
-                                    'target' => '_blank',
-                                ])
-                                ->setName($this->l('Login como Cliente')),
-                        ],
+                        'actions' => $actionsCollection
                     ])
             );
     }
