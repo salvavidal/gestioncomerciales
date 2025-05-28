@@ -105,28 +105,27 @@ class Gestioncomerciales extends Module
             (new ActionColumn('actions'))
                 ->setName($this->l('Acciones'))
                 ->setOptions([
-                    'actions' => (new RowActionCollection())
-                        ->add(
-                            (new LinkRowAction('view'))
-                                ->setIcon('remove_red_eye')
-                                ->setName($this->l('Ver'))
-                                ->setOptions([
-                                    'route' => 'admin_customers_view',
-                                    'route_param_name' => 'customerId',
-                                    'route_param_field' => 'id_customer'
-                                ])
-                        )
-                        ->add(
-                            (new LinkRowAction('login_as_customer'))
-                                ->setIcon('account_circle')
-                                ->setName($this->l('Login como Cliente'))
-                                ->setOptions([
-                                    'route' => 'admin_customers_view',
-                                    'route_param_name' => 'customerId',
-                                    'route_param_field' => 'id_customer',
-                                    'route_fragment' => 'login_as_customer'
-                                ])
-                        )
+                    'actions' => [
+                        (new LinkRowAction('view'))
+                            ->setIcon('remove_red_eye')
+                            ->setName($this->l('Ver'))
+                            ->setOptions([
+                                'route' => 'admin_customers_view',
+                                'route_param_name' => 'customerId',
+                                'route_param_field' => 'id_customer'
+                            ]),
+                        (new LinkRowAction('login_as_customer'))
+                            ->setIcon('account_circle')
+                            ->setName($this->l('Login como Cliente'))
+                            ->setOptions([
+                                'route' => 'admin_customers_view',
+                                'route_param_name' => 'customerId',
+                                'route_param_field' => 'id_customer',
+                                'extra_route_params' => [
+                                    'action' => 'loginAsCustomer'
+                                ]
+                            ])
+                    ]
                 ])
         );
     }
@@ -225,6 +224,25 @@ class Gestioncomerciales extends Module
         $output .= $this->renderClientCommercialList();
 
         return $output;
+    }
+
+    private function processAssignClients()
+    {
+        $id_comercial = (int)Tools::getValue('id_comercial');
+        $id_clients = Tools::getValue('id_clients');
+
+        if ($id_comercial && !empty($id_clients)) {
+            foreach ($id_clients as $id_cliente) {
+                Db::getInstance()->delete('comerciales_clientes', 'id_cliente = ' . (int)$id_cliente);
+                Db::getInstance()->insert('comerciales_clientes', [
+                    'id_comercial' => (int)$id_comercial,
+                    'id_cliente' => (int)$id_cliente
+                ]);
+            }
+            $this->context->controller->confirmations[] = $this->l('Clientes asignados correctamente al comercial.');
+        } else {
+            $this->context->controller->errors[] = $this->l('Selecciona un comercial y al menos un cliente.');
+        }
     }
 
     private function renderList()
@@ -337,25 +355,6 @@ class Gestioncomerciales extends Module
         $helper->currentIndex = AdminController::$currentIndex . '&configure=' . $this->name;
 
         return $helper->generateList($clients, $fields_list);
-    }
-
-    private function processAssignClients()
-    {
-        $id_comercial = (int)Tools::getValue('id_comercial');
-        $id_clients = Tools::getValue('id_clients');
-
-        if ($id_comercial && !empty($id_clients)) {
-            foreach ($id_clients as $id_cliente) {
-                Db::getInstance()->delete('comerciales_clientes', 'id_cliente = ' . (int)$id_cliente);
-                Db::getInstance()->insert('comerciales_clientes', [
-                    'id_comercial' => (int)$id_comercial,
-                    'id_cliente' => (int)$id_cliente
-                ]);
-            }
-            $this->context->controller->confirmations[] = $this->l('Clientes asignados correctamente al comercial.');
-        } else {
-            $this->context->controller->errors[] = $this->l('Selecciona un comercial y al menos un cliente.');
-        }
     }
 
     private function getAllCommercials($onlyCommercials = false)
