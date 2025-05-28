@@ -7,7 +7,7 @@ class AdminCustomersController extends AdminCustomersControllerCore
         parent::__construct();
         $this->bootstrap = true;
         
-        // Añadir la acción loginAsCustomer
+        // Registrar la acción loginAsCustomer
         if (!in_array('loginAsCustomer', $this->actions)) {
             $this->actions[] = 'loginAsCustomer';
         }
@@ -26,6 +26,29 @@ class AdminCustomersController extends AdminCustomersControllerCore
         }
 
         parent::getList($id_lang, $order_by, $order_way, $start, $limit, $id_lang_shop);
+    }
+
+    public function initPageHeaderToolbar()
+    {
+        parent::initPageHeaderToolbar();
+        
+        if (Tools::getValue('id_customer')) {
+            $this->page_header_toolbar_btn['login_as_customer'] = [
+                'href' => self::$currentIndex . '&action=loginAsCustomer&id_customer=' . (int)Tools::getValue('id_customer') . '&token=' . $this->token,
+                'desc' => $this->l('Login como Cliente'),
+                'icon' => 'process-icon-preview'
+            ];
+        }
+    }
+
+    public function postProcess()
+    {
+        if (Tools::isSubmit('action') && Tools::getValue('action') === 'loginAsCustomer') {
+            $this->loginAsCustomer();
+            return;
+        }
+        
+        parent::postProcess();
     }
 
     public function loginAsCustomer()
@@ -63,28 +86,5 @@ class AdminCustomersController extends AdminCustomersControllerCore
         
         // Redirigir al front-office
         Tools::redirect($this->context->link->getPageLink('my-account'));
-    }
-
-    public function initPageHeaderToolbar()
-    {
-        parent::initPageHeaderToolbar();
-        
-        if (Tools::getValue('id_customer')) {
-            $this->page_header_toolbar_btn['login_as_customer'] = [
-                'href' => $this->context->link->getAdminLink('AdminCustomers') . '&id_customer=' . (int)Tools::getValue('id_customer') . '&action=loginAsCustomer',
-                'desc' => $this->l('Login como Cliente'),
-                'icon' => 'process-icon-preview'
-            ];
-        }
-    }
-
-    public function postProcess()
-    {
-        if (Tools::isSubmit('action') && Tools::getValue('action') === 'loginAsCustomer') {
-            $this->loginAsCustomer();
-            return;
-        }
-        
-        parent::postProcess();
     }
 }
