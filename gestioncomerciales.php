@@ -3,6 +3,9 @@ if (!defined('_PS_VERSION_')) {
     exit;
 }
 
+use PrestaShop\PrestaShop\Core\Grid\Column\Type\Common\ActionColumn;
+use PrestaShop\PrestaShop\Core\Grid\Action\Row\Type\LinkRowAction;
+
 class Gestioncomerciales extends Module
 {
     public function __construct()
@@ -25,6 +28,14 @@ class Gestioncomerciales extends Module
     {
         include(dirname(__FILE__).'/sql/install.php');
         
+        if (!parent::install() || 
+            !$this->registerHook('displayBackOfficeHeader') ||
+            !$this->registerHook('displayAdminCustomers') ||
+            !$this->registerHook('displayAdminCustomersForm') ||
+            !$this->registerHook('actionCustomerGridDefinitionModifier')) {
+            return false;
+        }
+        
         // Crear la pestaña en el menú
         $tab = new Tab();
         $tab->active = 1;
@@ -35,15 +46,12 @@ class Gestioncomerciales extends Module
         }
         $tab->id_parent = (int)Tab::getIdFromClassName('SELL');
         $tab->module = $this->name;
-        $tab->add();
+        
+        if (!$tab->add()) {
+            return false;
+        }
 
-        return parent::install() && 
-               $this->registerHook('displayHeader') &&
-               $this->registerHook('displayBackOfficeHeader') &&
-               $this->registerHook('displayAdminCustomers') &&
-               $this->registerHook('displayAdminCustomersForm') &&
-               $this->registerHook('actionCustomerGridDefinitionModifier') &&
-               $this->installOverrides();
+        return true;
     }
 
     public function uninstall()
@@ -57,30 +65,7 @@ class Gestioncomerciales extends Module
             $tab->delete();
         }
         
-        return parent::uninstall() && $this->uninstallOverrides();
-    }
-
-    public function installOverrides()
-    {
-        try {
-            return parent::installOverrides();
-        } catch (Exception $e) {
-            return false;
-        }
-    }
-
-    public function uninstallOverrides()
-    {
-        try {
-            return parent::uninstallOverrides();
-        } catch (Exception $e) {
-            return false;
-        }
-    }
-
-    public function hookDisplayHeader()
-    {
-        return '';
+        return parent::uninstall();
     }
 
     public function hookDisplayBackOfficeHeader()
@@ -156,5 +141,85 @@ class Gestioncomerciales extends Module
             );
     }
 
-    // Resto del código sin cambios...
-    [Previous content continues...]
+    public function getContent()
+    {
+        $output = '';
+        
+        if (Tools::isSubmit('submitAssignClients')) {
+            $id_comercial = (int)Tools::getValue('id_comercial');
+            $id_clients = Tools::getValue('id_clients');
+
+            if ($id_comercial && !empty($id_clients)) {
+                foreach ($id_clients as $id_cliente) {
+                    Db::getInstance()->delete('comerciales_clientes', 'id_cliente = ' . (int)$id_cliente);
+                    Db::getInstance()->insert('comerciales_clientes', [
+                        'id_comercial' => (int)$id_comercial,
+                        'id_cliente' => (int)$id_cliente
+                    ]);
+                }
+                $output .= $this->displayConfirmation($this->l('Clientes asignados correctamente al comercial.'));
+            } else {
+                $output .= $this->displayError($this->l('Selecciona un comercial y al menos un cliente.'));
+            }
+        }
+
+        return $output . $this->renderForm();
+    }
+
+    protected function renderForm()
+    {
+        $commercials = $this->getAllCommercials();
+        $clients = $this->getAllClients();
+        $clientCommercialList = $this->getClientCommercialList();
+
+        $this->context->smarty->assign([
+            'commercials' => $commercials,
+            'clients' => $clients,
+            'clientCommercialList' => $clientCommercialList,
+            'module_dir' => $this->_path,
+        ]);
+
+        return $this->display(__FILE__, 'views/templates/admin/assign_clients.tpl');
+    }
+
+    private function getAllCommercials()
+    {
+        $id_lang = (int)$this->context->language->id;
+        
+        $sql = '
+            SELECT 
+                e.id_employee AS id, 
+                e.firstname, 
+                e.lastname, 
+                pl.name AS profile
+            FROM ' . _DB_PREFIX_ . 'employee e
+            LEFT JOIN ' . _DB_PREFIX_ . 'profile_lang pl ON e.id_profile = pl.id_profile AND pl.id_lang = ' . $id_lang . '
+            ORDER BY e.lastname ASC, e.firstname ASC';
+        
+        return Db::getInstance()->executeS($sql);
+    }
+
+    private function getAllClients()
+    {
+        $sql = 'SELECT `id_customer`, `firstname`, `lastname`, `email` FROM `' . _DB_PREFIX_ . 'customer`';
+        return Db::getInstance()->executeS($sql);
+    }
+
+    private function getClientCommercialList()
+    {
+        $sql = '
+            SELECT 
+                c.`id_customer`, 
+                c.`firstname`, 
+                c.`lastname`, 
+                c.`email`,
+                e.`firstname` AS commercial_firstname, 
+                e.`lastname` AS commercial_lastname
+            FROM `' . _DB_PREFIX_ . 'customer` c
+            LEFT JOIN `' . _DB_PREFIX_ . 'comerciales_clientes` cc ON c.`id_customer` = cc.`id_cliente`
+            LEFT JOIN `' . _DB_PREFIX_ . 'employee` e ON cc.`id_comercial` = e.`id_employee`
+            ORDER BY c.`lastname` ASC, c.`firstname` ASC';
+        
+        return Db::getInstance()->executeS($sql);
+    }
+}
