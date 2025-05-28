@@ -44,8 +44,7 @@ class Gestioncomerciales extends Module
         $tab->add();
 
         return parent::install() && 
-               $this->registerHook('header') &&
-               $this->registerHook('backOfficeHeader') &&
+               $this->registerHook('displayBackOfficeHeader') &&
                $this->registerHook('displayAdminCustomers') &&
                $this->registerHook('actionCustomerGridDefinitionModifier');
     }
@@ -64,7 +63,7 @@ class Gestioncomerciales extends Module
         return parent::uninstall();
     }
 
-    public function hookBackOfficeHeader()
+    public function hookDisplayBackOfficeHeader()
     {
         if (Tools::getValue('configure') == $this->name) {
             $this->context->controller->addJS($this->_path.'views/js/back.js');
